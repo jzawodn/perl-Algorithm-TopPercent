@@ -1,45 +1,128 @@
 package Algorithm::TopPercent;
-
-use 5.010001;
+package TopPercent;
 use strict;
 use warnings;
-
-require Exporter;
-use AutoLoader qw(AUTOLOAD);
-
-our @ISA = qw(Exporter);
-
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-
-# This allows declaration	use Algorithm::TopPercent ':all';
-# If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
-# will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(
-	
-) ] );
-
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-our @EXPORT = qw(
-	
-);
+use Carp;
 
 our $VERSION = '0.01';
 
+sub new {
+    my ($class, %arg) = @_;
 
-# Preloaded methods go here.
+    my $bucket_count;
+    my $percent;
 
-# Autoload methods go after =cut, and are processed by the autosplit program.
+    if ($bucket_count = delete $Args{Buckets}) {
+        $percent = 100 / $bucket_count;
+    } elsif ($percent = delete $Args{Percent}) {
+        ## Create an extra 10% buckets, just as a buffer.
+        $bucket_count = int(100 / $percent * 1.10);
+    } else {
+        carp "Missing 'Buckets' or 'Percent' args";
+        return ();
+    }
+
+    if ($Args{Buckets} or $Args{Percent}) {
+        carp "'Buckets' and 'Percent' args are mutually exclusive";
+        return ();
+    }
+
+	## Setup the linked list of buckets data structure
+    my @buckets;
+	$bucket_count--;
+    for my $i (0..$bucket_count) {
+        my $record =  {
+            key   => "",
+            count => 0,
+            ttl => 1,
+        };
+        if ($i > 0) {
+            $record->{next} = $buckets[$i-1];
+        }
+        $buckets[$i] = $record;
+    }
+    $buckets[0]->{next} = $buckets[-1];
+
+    my $top = bless {
+        Percent         => $percent,
+        total => 0,
+        bucket_count     => $bucket_count,
+        key_bucket     => {},
+        Buckets         => \@Buckets,
+        current         => $Buckets[0],
+    }, $class;
+
+    return $top;
+}
+
+sub add {
+    my ($self, $key) = @_;
+
+    $self->{total}++;
+
+	# found it?
+    if (exists $self->{key_bucket}->{$key}) {
+        $self->{key_bucket}->{$key}->{count}++;
+        $self->{key_bucket}->{$key}->{ttl}++;
+        return;
+    }
+
+	# nope.  maybe we can replse this one?
+    my $current = $self->{current};
+
+    if (--$current->{ttl} <= 0) {
+        ## item in this slot is expired, so replace it
+
+        delete $self->{key_bucket}->{$current->{Key}};
+
+        $self->{key_bucket}->{$key} = $current;
+        $current->{key} = $key;
+        $current->{count} = 1;
+        $current->{ttl} = 1;
+    }
+
+	# advance the pointer
+    $self->{current} = $current->{next};
+}
+
+sub top {
+    my ($self, $max) = @_;
+    $max ||= 2;
+
+	# find max count
+    for my $i (0..$self->{bucket_count}) {
+        my $count = $self->{buckets}->[$i]->{count};
+        $max = $count if $count > $max;
+    }
+
+	# set cutoff at 2% of max
+    my $threshold = int($max * 0.02);
+    $threshold = 2 if $threshold  < 2;
+
+    my %summary;
+    for my $i (0..$self->{bucket_count}) {
+        my $count = $self->{buckets}->[$i]->{count};
+        if ($count > $threshold) {
+            my $key = $self->{buckets}->[$i]->{key};
+            $summary{$key} = $count;
+        }
+    }
+
+    return \%summary;
+}
+
+sub total {
+    my $self = shift;
+    return $self->{total};
+}
 
 1;
 __END__
-# Below is stub documentation for your module. You'd better edit it!
 
 =head1 NAME
 
-Algorithm::TopPercent - Perl extension for blah blah blah
+Algorithm::TopPercent - Perl extension for tracking the most popular
+items seen in a stream of data using fixed memory.
 
 =head1 SYNOPSIS
 
@@ -48,32 +131,32 @@ Algorithm::TopPercent - Perl extension for blah blah blah
 
 =head1 DESCRIPTION
 
-Stub documentation for Algorithm::TopPercent, created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
+This module implements a simple algorithm first described to my by Udi
+Manber when he was the Chief Scientist at Yahoo! Inc.  It's implements
+a set of data structures and a counting technique that allow you to
+track the top-N (or top-N percent) in a stream of data using fixed
+memory.
 
-Blah blah blah.
+I have reimplemented it mostly from my memory of his description
+roughly 8 years ago.
+
+It's worth noting that this algorithm only work on non-trivial data
+sets.  If you're trying to track the top-50 items our of 2,000, this
+module is complete overkill.
 
 =head2 EXPORT
 
 None by default.
 
-
-
 =head1 SEE ALSO
 
-Mention other useful documentation such as the documentation of
-related modules or operating system documentation (such as man pages
-in UNIX), or any relevant external documentation such as RFCs or
-standards.
+https://github.com/jzawodn/perl-Algorithm-TopPercent
 
-If you have a mailing list set up for your module, mention it here.
-
-If you have a web site set up for your module, mention it here.
+http://en.wikipedia.org/wiki/Udi_Manber
 
 =head1 AUTHOR
 
-Jeremy Zawodny, E<lt>jzawodn@E<gt>
+Jeremy Zawodny, E<lt>Jeremy@Zawodny.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -85,3 +168,5 @@ at your option, any later version of Perl 5 you may have available.
 
 
 =cut
+
+__END__
