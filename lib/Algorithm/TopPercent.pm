@@ -11,16 +11,7 @@ our $VERSION = '0.01';
 sub new {
     my ($class, %arg) = @_;
 
-    my $bucket_count = $arg{buckets};
-    my $percent      = $arg{percent};
-
-    if ($bucket_count) {
-        $percent = 100 / $bucket_count;
-    } elsif ($percent) {
-        $bucket_count = int(100 / $percent);
-    } else {
-		$bucket_count = 100;
-    }
+    my $bucket_count = $arg{buckets} || 1_000;
 
 	## Setup the linked list of buckets data structure
     my @buckets;
@@ -81,25 +72,13 @@ sub add {
 }
 
 sub top {
-    my ($self) = @_;
-	my $max = 2;
-
-	# find max count
-    for my $i (0..$self->{bucket_count}) {
-        my $count = $self->{buckets}->[$i]->{count};
-        $max = $count if $count > $max;
-    }
-	print "max: $max\n" if DEBUG;
-
-	# set cutoff at 2% of max
-    my $threshold = int($max * 0.02);
-    $threshold = 2 if $threshold  < 2;
-	print "threshold: $threshold\n" if DEBUG;
+    my ($self, $min) = @_;
+	$min ||= 2;
 
     my %summary;
     for my $i (0..$self->{bucket_count}) {
         my $count = $self->{buckets}->[$i]->{count};
-        if ($count > $threshold) {
+        if ($count >= $min) {
             my $key = $self->{buckets}->[$i]->{key};
             $summary{$key} = $count;
         }
