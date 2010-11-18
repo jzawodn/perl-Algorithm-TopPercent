@@ -1,30 +1,25 @@
 package Algorithm::TopPercent;
-package TopPercent;
+package Algorithm::TopPercent;
 use strict;
 use warnings;
 use Carp;
+
+use constant DEBUG => 0;
 
 our $VERSION = '0.01';
 
 sub new {
     my ($class, %arg) = @_;
 
-    my $bucket_count;
-    my $percent;
+    my $bucket_count = $arg{buckets};
+    my $percent      = $arg{percent};
 
-    if ($bucket_count = delete $Args{Buckets}) {
+    if ($bucket_count) {
         $percent = 100 / $bucket_count;
-    } elsif ($percent = delete $Args{Percent}) {
-        ## Create an extra 10% buckets, just as a buffer.
-        $bucket_count = int(100 / $percent * 1.10);
+    } elsif ($percent) {
+        $bucket_count = int(100 / $percent);
     } else {
-        carp "Missing 'Buckets' or 'Percent' args";
-        return ();
-    }
-
-    if ($Args{Buckets} or $Args{Percent}) {
-        carp "'Buckets' and 'Percent' args are mutually exclusive";
-        return ();
+		$bucket_count = 100;
     }
 
 	## Setup the linked list of buckets data structure
@@ -43,42 +38,42 @@ sub new {
     }
     $buckets[0]->{next} = $buckets[-1];
 
-    my $top = bless {
-        Percent         => $percent,
+	print "made 0..$bucket_count buckets\n" if DEBUG;
+
+    my $self = bless {
         total => 0,
-        bucket_count     => $bucket_count,
-        key_bucket     => {},
-        Buckets         => \@Buckets,
-        current         => $Buckets[0],
+        bucket_count => $bucket_count,
+        key_bucket   => {},
+        buckets      => \@buckets,
+        current      => $buckets[0],
     }, $class;
 
-    return $top;
+    return $self;
 }
 
 sub add {
-    my ($self, $key) = @_;
-
-    $self->{total}++;
+    my ($self, $key, $count) = @_;
+	$count ||= 1;
+    $self->{total} += $count;
 
 	# found it?
     if (exists $self->{key_bucket}->{$key}) {
-        $self->{key_bucket}->{$key}->{count}++;
-        $self->{key_bucket}->{$key}->{ttl}++;
+        $self->{key_bucket}->{$key}->{count} += $count;
+        $self->{key_bucket}->{$key}->{ttl} += $count;
         return;
     }
 
-	# nope.  maybe we can replse this one?
+	# nope.  maybe we can replace this one?
     my $current = $self->{current};
 
     if (--$current->{ttl} <= 0) {
-        ## item in this slot is expired, so replace it
-
-        delete $self->{key_bucket}->{$current->{Key}};
+		print "replace $current->{key} with $key\n" if DEBUG;
+        delete $self->{key_bucket}->{$current->{key}};
 
         $self->{key_bucket}->{$key} = $current;
         $current->{key} = $key;
-        $current->{count} = 1;
-        $current->{ttl} = 1;
+        $current->{count} = $count;
+        $current->{ttl} = $count;
     }
 
 	# advance the pointer
@@ -86,18 +81,20 @@ sub add {
 }
 
 sub top {
-    my ($self, $max) = @_;
-    $max ||= 2;
+    my ($self) = @_;
+	my $max = 2;
 
 	# find max count
     for my $i (0..$self->{bucket_count}) {
         my $count = $self->{buckets}->[$i]->{count};
         $max = $count if $count > $max;
     }
+	print "max: $max\n" if DEBUG;
 
 	# set cutoff at 2% of max
     my $threshold = int($max * 0.02);
     $threshold = 2 if $threshold  < 2;
+	print "threshold: $threshold\n" if DEBUG;
 
     my %summary;
     for my $i (0..$self->{bucket_count}) {
@@ -106,6 +103,7 @@ sub top {
             my $key = $self->{buckets}->[$i]->{key};
             $summary{$key} = $count;
         }
+		print "$i $count\n" if DEBUG;
     }
 
     return \%summary;
