@@ -1,0 +1,6 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Algorithm-TopPercent.t
+lib/Algorithm/TopPercent.pm
