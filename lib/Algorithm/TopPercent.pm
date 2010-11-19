@@ -99,7 +99,7 @@ __END__
 =head1 NAME
 
 Algorithm::TopPercent - Perl extension for tracking the most popular
-items seen in a stream of data using fixed memory.
+items seen in a large stream of data using fixed memory.
 
 =head1 SYNOPSIS
 
@@ -111,6 +111,7 @@ items seen in a stream of data using fixed memory.
     $top->add($val);
   }
 
+  my $total = $top->total();
   my $report = $top->report();
 
 =head1 DESCRIPTION
@@ -119,7 +120,8 @@ This module implements a simple algorithm first described to my by Udi
 Manber when he was the Chief Scientist at Yahoo! Inc.  It's implements
 a set of data structures and a counting technique that allow you to
 track the top-N (or top-N percent) in a stream of data using fixed
-memory.
+memory, provided that certain conditions are met.  See the DETAILS
+section for more information.
 
 I have reimplemented it mostly from my memory of his description
 roughly 8 years ago.
@@ -128,9 +130,101 @@ It's worth noting that this algorithm only work on non-trivial data
 sets.  If you're trying to track the top-50 items our of 2,000, this
 module is complete overkill.
 
+=head2 DETAILS
+
+Without going into a long description of how the algorithm works (it's
+much easiler to illustrate), here are a few of the assumptions it makes
+and some tips for using it effectively.
+
+The first thing to realize is that one of the tradeoffs this algorithm
+makes to achieve fixed memory usage when examining an unbouded set of
+data is a bias toward recently seen items if the stream of items is not
+semi-evenly distributed.
+
+That may make sense if I provide a sketch of the algorithm...
+
+They way it works is by keeping a number of buckets (1,000 by default).
+The buckets are treated as a ring buffer, so there is a C<current>
+pointer that points to the current bucket.  And each bucket contains a
+hash ref with three fields: C<key>, C<count>, and C<ttl>.  We also
+maintain a hash of all the known keys, pointing to them in the ring
+buffer.
+
+When C<add()> is called with a new C<key>, we check the hash to see if
+the key is already in the buffer.  If it is, we increment the C<count>
+and C<ttl> each by one.  If they C<key> is not present, we decrement the
+C<ttl> field of the current bucket.  If it falls below zero, we replace
+it with the new C<key>, setting both C<count> and C<ttl> to one.  We
+then advance the C<current> pointer to the next bucket in the ring
+buffer.
+
+At any point, calling C<report()> simply iterates over all the buckets,
+returning those that have a C<count> greater than or equal to 2 (or the
+user-specified minimum).  Using 2 keeps us from seeing items that are
+not likely to be significant in the data stream.
+
 =head2 EXPORT
 
 None by default.
+
+=head2 METHODS
+
+=over 4
+
+=item new(buckets => $num)
+
+Creates a new object with the specified number of buckets.  If
+unspecified, the default number of buckets is 1,000.
+
+=back
+
+=over 4
+
+=item add($key, $count)
+
+Adds a key to the stream.  If count is not specified (which is the
+common case for streaming/realtime data) then 1 is assumed.
+
+=back
+
+=over 4
+
+=item report($min)
+
+Return a hashref whose keys are the most popular of the keys you added
+and whose values are the counts of the number of times each key has
+been seen.
+
+Only keys that have counts greater than 2 will be returned by default.
+You can optionally supply a minimum value if 2 is too low.  Using 1 is
+not advised.  See the DETAILS section above for, well, details.
+
+=back
+
+=over 4
+
+=item total
+
+Returns the total number of items seen.
+
+=back
+
+=head1 TODO
+
+Items I'd like to do someday...
+
+=over 4
+
+=item *
+
+provide serialize and deserialize methods
+
+=item *
+
+support Redis as a backend so multiple machines can share the same
+data
+
+=back
 
 =head1 SEE ALSO
 
