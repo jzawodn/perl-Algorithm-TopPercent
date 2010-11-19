@@ -51,7 +51,7 @@ sub add {
     if (exists $self->{key_bucket}->{$key}) {
         $self->{key_bucket}->{$key}->{count} += $count;
         $self->{key_bucket}->{$key}->{ttl} += $count;
-        return;
+        return $self->{key_bucket}->{$key}->{count};
     }
 
 	# nope.  maybe we can replace this one?
@@ -209,7 +209,11 @@ unspecified, the default number of buckets is 1,000.
 =item add($key, $count)
 
 Adds a key to the stream.  If count is not specified (which is the
-common case for streaming/realtime data) then 1 is assumed.
+common case for streaming/realtime data) then 1 is assumed.  This method
+returns the item's new C<count>, which will be C<$count> if was not
+previously in the internal buffer.
+
+This is an O(1) operation.
 
 =back
 
@@ -225,6 +229,8 @@ Only keys that have counts greater than 2 will be returned by default.
 You can optionally supply a minimum value if 2 is too low.  Using 1 is
 not advised.  See the DETAILS section above for, well, details.
 
+This is an O(N) operation, where N is the number of buckets.
+
 =back
 
 =over 4
@@ -232,6 +238,8 @@ not advised.  See the DETAILS section above for, well, details.
 =item total
 
 Returns the total number of items seen.
+
+This is an O(1) operation.
 
 =back
 
