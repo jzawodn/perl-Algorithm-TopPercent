@@ -1,16 +1,18 @@
 Algorithm-TopPercent version 0.01
 =================================
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+A Perl extension for tracking the most popular items seen in a large
+stream of data using fixed memory.
 
-A README file is required for CPAN modules since CPAN extracts the
-README file from a module distribution so that people browsing the
-archive can use it get an idea of the modules uses. It is usually a
-good idea to provide version information here so that people can
-decide whether fixes for the module are worth downloading.
+This module implements a simple algorithm first described to my by Udi
+Manber when he was the Chief Scientist at Yahoo! Inc.  It implements
+a set of data structures and a counting technique that allow you to
+track the top-N (or top-N percent) in a stream of data using fixed
+memory, provided that certain conditions are met.  See the DETAILS
+section for more information.
+
+I have reimplemented it mostly from my memory of his description
+roughly 8 years ago.
 
 INSTALLATION
 
