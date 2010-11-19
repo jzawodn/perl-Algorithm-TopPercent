@@ -71,7 +71,7 @@ sub add {
     $self->{current} = $current->{next};
 }
 
-sub top {
+sub report {
     my ($self, $min) = @_;
 	$min ||= 2;
 
@@ -104,7 +104,14 @@ items seen in a stream of data using fixed memory.
 =head1 SYNOPSIS
 
   use Algorithm::TopPercent;
-  blah blah blah
+  my $top = Algorithm::TopPercent->new(buckets => 10_000);
+
+  while (<>) {
+    my $val = get_value_from_line($_);
+    $top->add($val);
+  }
+
+  my $report = $top->report();
 
 =head1 DESCRIPTION
 

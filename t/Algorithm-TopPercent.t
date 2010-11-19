@@ -16,7 +16,7 @@ for my $max (1..50) {
 my $total = $top->total();
 is($total, 1275, "add 1275 items");
 
-my $ref = $top->top();
+my $ref = $top->report();
 ok($ref, "top()");
 
 for (1..10) {
