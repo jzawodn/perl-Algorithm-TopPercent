@@ -209,9 +209,9 @@ unspecified, the default number of buckets is 1,000.
 =item add($key, $count)
 
 Adds a key to the stream.  If count is not specified (which is the
-common case for streaming/realtime data) then 1 is assumed.  This method
-returns the item's new C<count>, which will be C<$count> if was not
-previously in the internal buffer.
+common case for streaming/realtime data) then 1 is assumed. This
+method returns the item's new C<count>, which will be C<$count> if
+was not previously in the internal buffer.
 
 This is an O(1) operation.
 
