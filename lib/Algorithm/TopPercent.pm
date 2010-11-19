@@ -106,6 +106,13 @@ sub sorted_top {
 	return \@ret;
 }
 
+sub count {
+	my ($self, $key) = @_;
+    if ($self->{key_bucket}->{$key}) {
+        return $self->{key_bucket}->{$key}->{count};
+	}
+	return undef;
+}
 
 1;
 __END__
@@ -277,6 +284,19 @@ arrayrefs.
 
 This is an O(N+M) operation, where N is the number of buckets and M is
 the number of items you'd like.
+
+=back
+
+=over 4
+
+=item count($key)
+
+Returns the current count for the given key (if it's in the ring
+buffer), undef otherwise.  Note that C<add()> returns the count each
+time you call it for a key, so this is only needed if you want to peek
+at a value without changing anything.
+
+This is an O(1) operation.
 
 =back
 

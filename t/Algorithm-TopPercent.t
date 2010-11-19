@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use lib '../lib/';
-use Test::More tests => 15;
+use Test::More tests => 17;
 
 use_ok('Algorithm::TopPercent');
 
@@ -27,3 +27,9 @@ my $sorted = $top->sorted_top(10);
 ok($sorted, "sorted_top");
 
 is($sorted->[0]->[0], 1, "sorted_top top key");
+
+my $count = $top->count("1");
+is($count, 50, "count() for a known key");
+
+is($top->count("none"), undef, "count() for an unknown key");
+
