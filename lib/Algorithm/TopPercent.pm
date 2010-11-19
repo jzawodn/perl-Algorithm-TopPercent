@@ -114,6 +114,16 @@ items seen in a large stream of data using fixed memory.
   my $total = $top->total();
   my $report = $top->report();
 
+  print "$total total items counted\n";
+  print "top-10 and their counts:\n";
+
+  my $cnt = 0;
+
+  for my $key (sort { $report{$b} <=> $report{$a} } keys %$report) {
+    my $count = $report->{$key};
+	print "\t$key\t$count\n";
+  }
+
 =head1 DESCRIPTION
 
 This module implements a simple algorithm first described to my by Udi
