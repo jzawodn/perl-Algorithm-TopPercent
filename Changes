@@ -1,5 +1,8 @@
 Revision history for Perl extension Algorithm::TopPercent.
 
+0.02  Thu Nov 18 13:53:23 2010
+	- added sorted_top()
+
 0.01  Thu Nov 18 13:53:23 2010
 	- first version
 
