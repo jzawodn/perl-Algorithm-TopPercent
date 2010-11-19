@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use lib '../lib/';
-use Test::More tests => 13;
+use Test::More tests => 15;
 
 use_ok('Algorithm::TopPercent');
 
@@ -22,3 +22,8 @@ ok($ref, "top()");
 for (1..10) {
 	is($ref->{$_}, 50-($_-1), "top $_");
 }
+
+my $sorted = $top->sorted_top(10);
+ok($sorted, "sorted_top");
+
+is($sorted->[0]->[0], 1, "sorted_top top key");

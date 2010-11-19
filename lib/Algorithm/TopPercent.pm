@@ -89,9 +89,23 @@ sub report {
 }
 
 sub total {
-    my $self = shift;
+    my ($self) = @_;
     return $self->{total};
 }
+
+sub sorted_top {
+	my ($self, $num) = @_;
+	my $report = $self->report();
+
+	my @ret;
+	my $cnt;
+	for my $key (sort { $report->{$b} <=> $report->{$a} } keys %$report) {
+		my $count = $report->{$key};
+		push @ret, [ $key, $count ];
+	}
+	return \@ret;
+}
+
 
 1;
 __END__
@@ -119,7 +133,7 @@ items seen in a large stream of data using fixed memory.
 
   my $cnt = 0;
 
-  for my $key (sort { $report{$b} <=> $report{$a} } keys %$report) {
+  for my $key (sort { $report->{$b} <=> $report->{$a} } keys %$report) {
     my $count = $report->{$key};
 	print "\t$key\t$count\n";
   }
@@ -250,6 +264,19 @@ This is an O(N) operation, where N is the number of buckets.
 Returns the total number of items seen.
 
 This is an O(1) operation.
+
+=back
+
+=over 4
+
+=item sorted_top($num)
+
+This is a convenience wrapper that calls C<report()> and then sorts the
+records, returning the top C<$num> key/count pairs in a list of
+arrayrefs.
+
+This is an O(N+M) operation, where N is the number of buckets and M is
+the number of items you'd like.
 
 =back
 
