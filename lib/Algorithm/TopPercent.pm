@@ -117,7 +117,7 @@ items seen in a large stream of data using fixed memory.
 =head1 DESCRIPTION
 
 This module implements a simple algorithm first described to my by Udi
-Manber when he was the Chief Scientist at Yahoo! Inc.  It's implements
+Manber when he was the Chief Scientist at Yahoo! Inc.  It implements
 a set of data structures and a counting technique that allow you to
 track the top-N (or top-N percent) in a stream of data using fixed
 memory, provided that certain conditions are met.  See the DETAILS
@@ -127,19 +127,21 @@ I have reimplemented it mostly from my memory of his description
 roughly 8 years ago.
 
 It's worth noting that this algorithm only work on non-trivial data
-sets.  If you're trying to track the top-50 items our of 2,000, this
+sets.  If you're trying to track the top-50 items out of 2,000, this
 module is complete overkill.
 
 =head2 DETAILS
 
-Without going into a long description of how the algorithm works (it's
-much easiler to illustrate), here are a few of the assumptions it makes
-and some tips for using it effectively.
+Without going into a really long description of how the algorithm works
+(it's much easiler to illustrate), here are a few of the assumptions it
+makes and some tips for using it effectively.
 
 The first thing to realize is that one of the tradeoffs this algorithm
 makes to achieve fixed memory usage when examining an unbouded set of
 data is a bias toward recently seen items if the stream of items is not
-semi-evenly distributed.
+semi-evenly distributed.  It also doesn't guarantee to provide exact
+counts, but does a very good job of maintaining the relative ordering of
+frequently seen items under normal conditions.
 
 That may make sense if I provide a sketch of the algorithm...
 
@@ -162,6 +164,30 @@ At any point, calling C<report()> simply iterates over all the buckets,
 returning those that have a C<count> greater than or equal to 2 (or the
 user-specified minimum).  Using 2 keeps us from seeing items that are
 not likely to be significant in the data stream.
+
+If you run this algorithm in your head a bit, you realize that the
+number of buckets chosen and the evenness of your data are realted to
+each other.  You need to choose enough buckets so that one cycle thru
+the ring buffer is not so short that you're constantly expiring and
+replacing frequently seen (but not REALLY frequently seen) items with
+each other and losing their total counts along the way.
+
+You'll probably want a lot of buckets if the input contains a large
+rangee of possible values (something like email addresses in a large
+system).  For more tame data sets (words appearing in Engish text), you
+can get by with far fewer.
+
+Ultimately, you'll need to experiment a bit to see what the right number
+of buckets is and if this approach even works well for you data.  It can
+be surprisingly effective for answering questions like "which IP
+addresses are responsible for the greatest number of hits to this app
+recently?"
+
+Another possible use is decicing what data to throw out because it is
+seen too frequently to be useful.  For example, if you're tracking keys
+in which a fairly small number of keys make up 50% of the volume, and
+you don't know in advance what they are (or don't want to hard-code
+them), you can quickly discover them using this module.
 
 =head2 EXPORT
 
