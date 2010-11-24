@@ -1,12 +1,11 @@
 package Algorithm::TopPercent;
-package Algorithm::TopPercent;
 use strict;
 use warnings;
 use Carp;
 
 use constant DEBUG => 0;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub new {
     my ($class, %arg) = @_;
@@ -21,6 +20,7 @@ sub new {
             key   => "",
             count => 0,
             ttl => 1,
+            ts => time(),
         };
         if ($i > 0) {
             $record->{next} = $buckets[$i-1];
@@ -65,6 +65,7 @@ sub add {
         $current->{key} = $key;
         $current->{count} = $count;
         $current->{ttl} = $count;
+        $current->{ts} = time();
     }
 
 	# advance the pointer
@@ -102,6 +103,8 @@ sub sorted_top {
 	for my $key (sort { $report->{$b} <=> $report->{$a} } keys %$report) {
 		my $count = $report->{$key};
 		push @ret, [ $key, $count ];
+		$cnt++;
+		last if $cnt >= $num;
 	}
 	return \@ret;
 }
