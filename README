@@ -1,3 +1,14 @@
+NOTE
+====
+
+It seems that someone has already built this.  See:
+
+  - https://github.com/gray/statistics-topk
+  - http://search.cpan.org/dist/Statistics-TopK/
+
+I'd recommend using that module unless you're particularly fond of mine
+for some reason.
+
 Algorithm-TopPercent version 0.02
 =================================
 
